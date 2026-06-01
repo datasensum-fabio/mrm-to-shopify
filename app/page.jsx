@@ -1,16 +1,16 @@
 'use client';
 import { useState, useCallback, useRef } from 'react';
-import { processFile, toCSV } from '../lib/transform';
+import { processFile, toCSV, OUTPUT_COLUMNS, DESC_UPDATE_COLUMNS } from '../lib/transform';
 
 // ── Download button ────────────────────────────────────────────────────────────
 
-function DownloadButton({ label, filename, rows }) {
+function DownloadButton({ label, filename, rows, columns = OUTPUT_COLUMNS }) {
   const [loading, setLoading] = useState(false);
 
   const handleDownload = () => {
     setLoading(true);
     setTimeout(() => {
-      const csv  = toCSV(rows);
+      const csv  = toCSV(rows, columns);
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const url  = URL.createObjectURL(blob);
       const a    = document.createElement('a');
@@ -24,7 +24,7 @@ function DownloadButton({ label, filename, rows }) {
     }, 10);
   };
 
-  const sizeMB = (new Blob([toCSV(rows)]).size / (1024 * 1024)).toFixed(1);
+  const sizeMB = (new Blob([toCSV(rows, columns)]).size / (1024 * 1024)).toFixed(1);
 
   return (
     <button
@@ -51,10 +51,11 @@ function DownloadButton({ label, filename, rows }) {
 // ── Page ───────────────────────────────────────────────────────────────────────
 
 export default function Home() {
-  const [status,  setStatus]  = useState('idle');
-  const [results, setResults] = useState(null);
-  const [error,   setError]   = useState(null);
-  const [dragging, setDragging] = useState(false);
+  const [status,     setStatus]     = useState('idle');
+  const [results,    setResults]    = useState(null);
+  const [error,      setError]      = useState(null);
+  const [dragging,   setDragging]   = useState(false);
+  const [outputMode, setOutputMode] = useState('full'); // 'full' | 'desc'
   const inputRef = useRef(null);
 
   const handleFile = useCallback(async (file) => {
@@ -141,10 +142,10 @@ export default function Home() {
             {/* Stats */}
             <div className="grid grid-cols-4 gap-3 text-center">
               {[
-                { label: 'Input rows',     value: results.stats.input   },
-                { label: 'Output rows',    value: results.stats.output  },
-                { label: 'Wedding rings',  value: results.stats.wedding },
-                { label: 'Other',          value: results.stats.other   },
+                { label: 'Input rows',    value: results.stats.input   },
+                { label: 'Output rows',   value: results.stats.output  },
+                { label: 'Wedding rings', value: results.stats.wedding },
+                { label: 'Other',         value: results.stats.other   },
               ].map(({ label, value }) => (
                 <div key={label} className="bg-white border border-gray-200 rounded-xl p-4">
                   <div className="text-2xl font-bold text-blue-600">{value.toLocaleString()}</div>
@@ -153,14 +154,55 @@ export default function Home() {
               ))}
             </div>
 
-            {/* Download buttons */}
-            <div className="bg-white border border-gray-200 rounded-2xl p-5 space-y-2">
-              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-                Download Output Files
-              </h2>
-              {results.files.map(f => (
-                <DownloadButton key={f.filename} {...f} />
-              ))}
+            {/* Output mode tabs */}
+            <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+              {/* Tab bar */}
+              <div className="flex border-b border-gray-200">
+                <button
+                  onClick={() => setOutputMode('full')}
+                  className={`flex-1 px-4 py-3 text-sm font-medium transition-colors
+                    ${outputMode === 'full'
+                      ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-500'
+                      : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
+                    }`}
+                >
+                  Full Import
+                </button>
+                <button
+                  onClick={() => setOutputMode('desc')}
+                  className={`flex-1 px-4 py-3 text-sm font-medium transition-colors
+                    ${outputMode === 'desc'
+                      ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-500'
+                      : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
+                    }`}
+                >
+                  Description Update Only
+                </button>
+              </div>
+
+              {/* Tab content */}
+              <div className="p-5 space-y-2">
+                {outputMode === 'full' ? (
+                  <>
+                    <p className="text-xs text-gray-400 mb-3">
+                      All {OUTPUT_COLUMNS.length} columns — use for first-time product imports or full refreshes.
+                    </p>
+                    {results.files.map(f => (
+                      <DownloadButton key={f.filename} {...f} />
+                    ))}
+                  </>
+                ) : (
+                  <>
+                    <p className="text-xs text-gray-400 mb-3">
+                      {DESC_UPDATE_COLUMNS.length} columns only ({DESC_UPDATE_COLUMNS.join(', ')}) · {results.stats.descRows.toLocaleString()} unique products · one row per product.
+                      Use to update descriptions on existing Shopify products without touching inventory or pricing.
+                    </p>
+                    {results.descFiles.map(f => (
+                      <DownloadButton key={f.filename} {...f} />
+                    ))}
+                  </>
+                )}
+              </div>
             </div>
 
             {/* Process another */}
