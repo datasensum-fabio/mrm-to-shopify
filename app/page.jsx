@@ -194,8 +194,8 @@ export default function Home() {
                 ) : (
                   <>
                     <p className="text-xs text-gray-400 mb-3">
-                      {DESC_UPDATE_COLUMNS.length} columns only ({DESC_UPDATE_COLUMNS.join(', ')}) · {results.stats.descRows.toLocaleString()} unique products · one row per product.
-                      Use to update descriptions on existing Shopify products without touching inventory or pricing.
+                      {DESC_UPDATE_COLUMNS.length} columns · {results.stats.output.toLocaleString()} rows (all variants included so Shopify can match each size).
+                      Updates Description only — inventory, pricing, and images are untouched.
                     </p>
                     {results.descFiles.map(f => (
                       <DownloadButton key={f.filename} {...f} />
