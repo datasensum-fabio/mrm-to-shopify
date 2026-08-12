@@ -123,7 +123,7 @@ export default function Home() {
               <p className="font-semibold text-gray-700">
                 {dragging ? 'Drop your CSV file here' : 'Click or drag & drop your CSV file'}
               </p>
-              <p className="text-sm text-gray-400 mt-1">French-encoded (ISO-8859-1) files supported</p>
+              <p className="text-sm text-gray-400 mt-1">Encoding detected automatically — accents are preserved</p>
             </>
           )}
         </div>
@@ -153,6 +153,12 @@ export default function Home() {
                 </div>
               ))}
             </div>
+
+            {/* Detected source encoding — output is always UTF-8 with BOM */}
+            <p className="text-xs text-center text-gray-400">
+              Source encoding detected: <span className="font-medium text-gray-500">{results.stats.encoding}</span>
+              {' · '}downloads are UTF-8 with BOM
+            </p>
 
             {/* Output mode tabs */}
             <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
