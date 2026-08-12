@@ -176,7 +176,7 @@ export default function Home() {
                       : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
                     }`}
                 >
-                  Description Update Only
+                  Description + Tags Update
                 </button>
               </div>
 
@@ -195,7 +195,7 @@ export default function Home() {
                   <>
                     <p className="text-xs text-gray-400 mb-3">
                       {DESC_UPDATE_COLUMNS.length} columns · {results.stats.output.toLocaleString()} rows (all variants included so Shopify can match each size).
-                      Updates Description only — inventory, pricing, and images are untouched.
+                      Updates Description and Tags only — inventory, pricing, and images are untouched.
                     </p>
                     {results.descFiles.map(f => (
                       <DownloadButton key={f.filename} {...f} />
