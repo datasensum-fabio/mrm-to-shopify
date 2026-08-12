@@ -160,6 +160,15 @@ export default function Home() {
               {' · '}downloads are UTF-8 with BOM
             </p>
 
+            {/* Upstream mojibake repair (MRM exports cp1252 text mis-decoded as cp1250) */}
+            {results.stats.repaired > 0 && (
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs">
+                Repaired accents in <b>{results.stats.repaired.toLocaleString()}</b> fields — the MRM
+                export mis-encodes à, è, ï and Ø (e.g. “Chevaličre” → “Chevalière”). Fixed here, but
+                worth reporting to MRM so the export is corrected at source.
+              </div>
+            )}
+
             {/* Output mode tabs */}
             <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
               {/* Tab bar */}
