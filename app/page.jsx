@@ -197,6 +197,15 @@ export default function Home() {
 
             {/* Output mode tabs */}
             <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+              <div className="px-5 py-4 bg-blue-50 border-b border-blue-100">
+                <h2 className="text-sm font-semibold text-blue-900">Shopify import workflow</h2>
+                <ol className="mt-2 space-y-1 text-xs text-blue-800 list-decimal list-inside">
+                  <li><b>Full Import:</b> creates or refreshes products and variants; includes the single-value Age Group metafield.</li>
+                  <li><b>Description + Tags:</b> optional existing-product update for Description, Tags, and Age Group only.</li>
+                  <li><b>List Metafields:</b> separate custom-field-only files for Jewel Style and Stones. Import both after the products exist.</li>
+                </ol>
+              </div>
+
               {/* Tab bar */}
               <div className="flex border-b border-gray-200">
                 <button
@@ -235,18 +244,24 @@ export default function Home() {
               <div className="p-5 space-y-2">
                 {outputMode === 'full' ? (
                   <>
-                    <p className="text-xs text-gray-400 mb-3">
-                      All {OUTPUT_COLUMNS.length} columns — use for first-time product imports or full refreshes.
-                    </p>
+                    <div className="mb-3 p-3 bg-green-50 border border-green-200 rounded-lg text-xs text-green-800">
+                      <b>Product and variant import.</b> Use this first. It includes Age Group, but Jewel Style and Stones
+                      must be applied afterward from the List Metafields tab.
+                    </div>
+                    <p className="text-xs text-gray-400 mb-3">All {OUTPUT_COLUMNS.length} product/variant columns.</p>
                     {results.files.map(f => (
                       <DownloadButton key={f.filename} {...f} />
                     ))}
                   </>
                 ) : outputMode === 'desc' ? (
                   <>
+                    <div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">
+                      <b>Existing-product fields only.</b> This does not update inventory, pricing, images, Jewel Style, or Stones.
+                      Select <b>Overwrite existing products</b> during import.
+                    </div>
                     <p className="text-xs text-gray-400 mb-3">
                       {DESC_UPDATE_COLUMNS.length} columns · {results.stats.output.toLocaleString()} rows (all variants included so Shopify can match each size).
-                      Updates Description, Tags, and Age Group only — inventory, pricing, and images are untouched.
+                      Updates Description, Tags, and Age Group.
                     </p>
                     {results.descFiles.map(f => (
                       <DownloadButton key={f.filename} {...f} />
@@ -254,9 +269,13 @@ export default function Home() {
                   </>
                 ) : (
                   <>
+                    <div className="mb-3 p-3 bg-purple-50 border border-purple-200 rounded-lg text-xs text-purple-800">
+                      <b>Custom-field updates only — not product or variant imports.</b> Import both files after the products
+                      already exist, and select <b>Overwrite existing products</b>. The files update only Jewel Style and Stones.
+                    </div>
                     <p className="text-xs text-gray-400 mb-3">
                       Separate three-column files for Jewel Style and Stones, with one value per product row.
-                      Continuation rows repeat the exact Handle and leave Title blank. Select “Overwrite existing products” during import.
+                      Continuation rows repeat the exact Handle and leave Title blank.
                     </p>
                     {results.metafieldFiles.map(f => (
                       <DownloadButton key={f.filename} {...f} />
