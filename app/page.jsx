@@ -154,6 +154,30 @@ export default function Home() {
               ))}
             </div>
 
+            {/* Rows excluded by each sequential pipeline filter */}
+            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-200">
+                <div>
+                  <h2 className="text-sm font-semibold text-gray-800">Rows dropped from final output</h2>
+                  <p className="text-xs text-gray-500 mt-0.5">Each row is counted against the first filter that removes it.</p>
+                </div>
+                <div className="text-right ml-4">
+                  <div className="text-xl font-bold text-red-600">{results.stats.dropped.toLocaleString()}</div>
+                  <div className="text-xs text-gray-500">total dropped</div>
+                </div>
+              </div>
+              <div className="divide-y divide-gray-100">
+                {results.stats.dropReasons.map(reason => (
+                  <div key={reason.key} className="flex items-center justify-between gap-4 px-4 py-2.5">
+                    <span className="text-xs text-gray-600">{reason.label}</span>
+                    <span className={`text-sm font-semibold tabular-nums ${reason.count ? 'text-red-600' : 'text-gray-400'}`}>
+                      {reason.count.toLocaleString()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             {/* Detected source encoding — output is always UTF-8 with BOM */}
             <p className="text-xs text-center text-gray-400">
               Source encoding detected: <span className="font-medium text-gray-500">{results.stats.encoding}</span>
