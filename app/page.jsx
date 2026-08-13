@@ -57,7 +57,7 @@ export default function Home() {
   const [results,    setResults]    = useState(null);
   const [error,      setError]      = useState(null);
   const [dragging,   setDragging]   = useState(false);
-  const [outputMode, setOutputMode] = useState('full'); // 'full' | 'desc' | 'metafields'
+  const [outputMode, setOutputMode] = useState('full'); // 'full' | 'desc'
   const inputRef = useRef(null);
 
   const handleFile = useCallback(async (file) => {
@@ -200,9 +200,8 @@ export default function Home() {
               <div className="px-5 py-4 bg-blue-50 border-b border-blue-100">
                 <h2 className="text-sm font-semibold text-blue-900">Shopify import workflow</h2>
                 <ol className="mt-2 space-y-1 text-xs text-blue-800 list-decimal list-inside">
-                  <li><b>Full Import:</b> creates or refreshes products and variants; includes the single-value Age Group metafield.</li>
-                  <li><b>Description + Tags:</b> optional existing-product update for Description, Tags, and Age Group only.</li>
-                  <li><b>List Metafields:</b> separate custom-field-only files for Jewel Style and Stones. Import both after the products exist.</li>
+                  <li><b>Full Import:</b> creates or refreshes products and variants; includes Age Group, Jewel Style, and Stones.</li>
+                  <li><b>Description + Tags + Metafields:</b> updates those product-level fields without changing inventory, pricing, or images.</li>
                 </ol>
               </div>
 
@@ -226,17 +225,7 @@ export default function Home() {
                       : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
                     }`}
                 >
-                  Description + Tags
-                </button>
-                <button
-                  onClick={() => setOutputMode('metafields')}
-                  className={`flex-1 px-4 py-3 text-sm font-medium transition-colors
-                    ${outputMode === 'metafields'
-                      ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-500'
-                      : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
-                    }`}
-                >
-                  List Metafields
+                  Description + Tags + Metafields
                 </button>
               </div>
 
@@ -245,39 +234,25 @@ export default function Home() {
                 {outputMode === 'full' ? (
                   <>
                     <div className="mb-3 p-3 bg-green-50 border border-green-200 rounded-lg text-xs text-green-800">
-                      <b>Product and variant import.</b> Use this first. It includes Age Group, but Jewel Style and Stones
-                      must be applied afterward from the List Metafields tab.
+                      <b>Product and variant import.</b> It includes Age Group, Jewel Style, and Stones using the exact
+                      headers and newline-separated list format emitted by your Shopify product export.
                     </div>
                     <p className="text-xs text-gray-400 mb-3">All {OUTPUT_COLUMNS.length} product/variant columns.</p>
                     {results.files.map(f => (
                       <DownloadButton key={f.filename} {...f} />
                     ))}
                   </>
-                ) : outputMode === 'desc' ? (
+                ) : (
                   <>
                     <div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">
-                      <b>Existing-product fields only.</b> This does not update inventory, pricing, images, Jewel Style, or Stones.
+                      <b>Existing-product fields only.</b> This does not update inventory, pricing, or images.
                       Select <b>Overwrite existing products</b> during import.
                     </div>
                     <p className="text-xs text-gray-400 mb-3">
                       {DESC_UPDATE_COLUMNS.length} columns · {results.stats.output.toLocaleString()} rows (all variants included so Shopify can match each size).
-                      Updates Description, Tags, and Age Group.
+                      Updates Description, Tags, Age Group, Jewel Style, and Stones.
                     </p>
                     {results.descFiles.map(f => (
-                      <DownloadButton key={f.filename} {...f} />
-                    ))}
-                  </>
-                ) : (
-                  <>
-                    <div className="mb-3 p-3 bg-purple-50 border border-purple-200 rounded-lg text-xs text-purple-800">
-                      <b>Custom-field updates only — not product or variant imports.</b> Import both files after the products
-                      already exist, and select <b>Overwrite existing products</b>. The files update only Jewel Style and Stones.
-                    </div>
-                    <p className="text-xs text-gray-400 mb-3">
-                      Separate three-column files for Jewel Style and Stones, with one value per product row.
-                      Continuation rows repeat the exact Handle and leave Title blank.
-                    </p>
-                    {results.metafieldFiles.map(f => (
                       <DownloadButton key={f.filename} {...f} />
                     ))}
                   </>
