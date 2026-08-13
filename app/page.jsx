@@ -1,6 +1,8 @@
 'use client';
 import { useState, useCallback, useRef } from 'react';
-import { processFile, toCSV, OUTPUT_COLUMNS, DESC_UPDATE_COLUMNS } from '../lib/transform';
+import {
+  processFile, toCSV, OUTPUT_COLUMNS, DESC_UPDATE_COLUMNS,
+} from '../lib/transform';
 
 // ── Download button ────────────────────────────────────────────────────────────
 
@@ -55,7 +57,7 @@ export default function Home() {
   const [results,    setResults]    = useState(null);
   const [error,      setError]      = useState(null);
   const [dragging,   setDragging]   = useState(false);
-  const [outputMode, setOutputMode] = useState('full'); // 'full' | 'desc'
+  const [outputMode, setOutputMode] = useState('full'); // 'full' | 'desc' | 'metafields'
   const inputRef = useRef(null);
 
   const handleFile = useCallback(async (file) => {
@@ -215,7 +217,17 @@ export default function Home() {
                       : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
                     }`}
                 >
-                  Description + Tags + Metafields
+                  Description + Tags
+                </button>
+                <button
+                  onClick={() => setOutputMode('metafields')}
+                  className={`flex-1 px-4 py-3 text-sm font-medium transition-colors
+                    ${outputMode === 'metafields'
+                      ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-500'
+                      : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
+                    }`}
+                >
+                  List Metafields
                 </button>
               </div>
 
@@ -230,13 +242,23 @@ export default function Home() {
                       <DownloadButton key={f.filename} {...f} />
                     ))}
                   </>
-                ) : (
+                ) : outputMode === 'desc' ? (
                   <>
                     <p className="text-xs text-gray-400 mb-3">
                       {DESC_UPDATE_COLUMNS.length} columns · {results.stats.output.toLocaleString()} rows (all variants included so Shopify can match each size).
-                      Updates Description, Tags, Jewel Style, Age Group, and Stones only — inventory, pricing, and images are untouched.
+                      Updates Description, Tags, and Age Group only — inventory, pricing, and images are untouched.
                     </p>
                     {results.descFiles.map(f => (
+                      <DownloadButton key={f.filename} {...f} />
+                    ))}
+                  </>
+                ) : (
+                  <>
+                    <p className="text-xs text-gray-400 mb-3">
+                      Separate three-column files for Jewel Style and Stones, with one value per product row.
+                      Continuation rows repeat the exact Handle and leave Title blank. Select “Overwrite existing products” during import.
+                    </p>
+                    {results.metafieldFiles.map(f => (
                       <DownloadButton key={f.filename} {...f} />
                     ))}
                   </>
