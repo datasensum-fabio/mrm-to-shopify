@@ -58,12 +58,27 @@ export default function Home() {
   const [error,      setError]      = useState(null);
   const [dragging,   setDragging]   = useState(false);
   const [outputMode, setOutputMode] = useState('full'); // 'full' | 'desc'
+  const [mrmFile,     setMrmFile]     = useState(null);
+  const [shopifyFile, setShopifyFile] = useState(null);
   const inputRef = useRef(null);
+  const shopifyInputRef = useRef(null);
 
-  const handleFile = useCallback(async (file) => {
-    if (!file) return;
+  const selectCSV = useCallback((file, setter) => {
+    if (!file) return false;
     if (!file.name.toLowerCase().endsWith('.csv')) {
       setError('Please upload a .csv file.');
+      return false;
+    }
+    setter(file);
+    setError(null);
+    setResults(null);
+    setStatus('idle');
+    return true;
+  }, []);
+
+  const handleProcess = useCallback(async () => {
+    if (!mrmFile) {
+      setError('Please select the MRM input CSV first.');
       return;
     }
     setStatus('processing');
@@ -71,19 +86,20 @@ export default function Home() {
     setResults(null);
 
     try {
-      const result = await processFile(file);
+      const result = await processFile(mrmFile, shopifyFile);
       setResults(result);
       setStatus('done');
     } catch (err) {
       setError(err.message || 'An unexpected error occurred.');
       setStatus('error');
     }
-  }, []);
+  }, [mrmFile, shopifyFile]);
 
-  const onDrop      = useCallback((e) => { e.preventDefault(); setDragging(false); handleFile(e.dataTransfer.files[0]); }, [handleFile]);
+  const onDrop      = useCallback((e) => { e.preventDefault(); setDragging(false); selectCSV(e.dataTransfer.files[0], setMrmFile); }, [selectCSV]);
   const onDragOver  = (e) => { e.preventDefault(); setDragging(true);  };
   const onDragLeave = ()  => setDragging(false);
-  const onInputChange = (e) => handleFile(e.target.files[0]);
+  const onInputChange = (e) => selectCSV(e.target.files[0], setMrmFile);
+  const onShopifyInputChange = (e) => selectCSV(e.target.files[0], setShopifyFile);
 
   return (
     <main className="min-h-screen bg-gray-50 py-16 px-4">
@@ -93,11 +109,11 @@ export default function Home() {
         <div className="text-center">
           <h1 className="text-3xl font-bold text-gray-900 tracking-tight">MRM Product Catalog</h1>
           <p className="mt-2 text-gray-500 text-sm">
-            Upload your CSV, all transformations run in your browser, then download the output files.
+            Upload the MRM CSV and optionally the latest Shopify export. All processing stays in your browser.
           </p>
         </div>
 
-        {/* Upload zone */}
+        {/* MRM upload zone */}
         <div
           onClick={() => status !== 'processing' && inputRef.current?.click()}
           onDrop={onDrop}
@@ -123,12 +139,48 @@ export default function Home() {
             <>
               <div className="text-5xl mb-4">📂</div>
               <p className="font-semibold text-gray-700">
-                {dragging ? 'Drop your CSV file here' : 'Click or drag & drop your CSV file'}
+                {dragging ? 'Drop the MRM CSV here' : mrmFile ? mrmFile.name : 'Select the MRM input CSV'}
               </p>
-              <p className="text-sm text-gray-400 mt-1">Encoding detected automatically — accents are preserved</p>
+              <p className="text-sm text-gray-400 mt-1">Required · encoding detected automatically</p>
             </>
           )}
         </div>
+
+        {/* Optional Shopify export safety filter */}
+        {status !== 'processing' && (
+          <div className="bg-white border border-gray-200 rounded-2xl p-5">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-sm font-semibold text-gray-800">
+                  Latest Shopify product export <span className="font-normal text-gray-400">(optional)</span>
+                </h2>
+                <p className="text-xs text-gray-500 mt-1">
+                  MRM variants whose SKUs are absent from this export are removed before all transformations.
+                </p>
+              </div>
+              {shopifyFile && (
+                <button onClick={() => setShopifyFile(null)} className="text-xs text-red-500 hover:text-red-700">Remove</button>
+              )}
+            </div>
+            <input ref={shopifyInputRef} type="file" accept=".csv" onChange={onShopifyInputChange} className="hidden" />
+            <button
+              onClick={() => shopifyInputRef.current?.click()}
+              className="mt-3 w-full px-4 py-3 border border-dashed border-gray-300 rounded-xl text-sm text-gray-600 hover:border-blue-400 hover:bg-blue-50 transition-colors"
+            >
+              {shopifyFile ? shopifyFile.name : 'Select Shopify export CSV'}
+            </button>
+          </div>
+        )}
+
+        {status !== 'processing' && status !== 'done' && (
+          <button
+            onClick={handleProcess}
+            disabled={!mrmFile}
+            className="w-full px-5 py-3.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+          >
+            {shopifyFile ? 'Filter to Shopify products and process' : 'Process MRM file'}
+          </button>
+        )}
 
         {/* Error */}
         {error && (
@@ -185,6 +237,13 @@ export default function Home() {
               Source encoding detected: <span className="font-medium text-gray-500">{results.stats.encoding}</span>
               {' · '}downloads are UTF-8 with BOM
             </p>
+
+            {results.stats.shopifyFilterApplied && (
+              <div className="p-3 bg-green-50 border border-green-200 rounded-xl text-green-800 text-xs">
+                Shopify safety filter applied using <b>{results.stats.shopifyVariants.toLocaleString()}</b> exported variant SKUs.
+                Variants absent from that export cannot appear in these output files.
+              </div>
+            )}
 
             {/* Upstream mojibake repair (MRM exports cp1252 text mis-decoded as cp1250) */}
             {results.stats.repaired > 0 && (
@@ -262,7 +321,12 @@ export default function Home() {
 
             {/* Process another */}
             <button
-              onClick={() => { setStatus('idle'); setResults(null); setError(null); }}
+              onClick={() => {
+                setStatus('idle'); setResults(null); setError(null);
+                setMrmFile(null); setShopifyFile(null);
+                if (inputRef.current) inputRef.current.value = '';
+                if (shopifyInputRef.current) shopifyInputRef.current.value = '';
+              }}
               className="w-full text-sm text-gray-400 hover:text-blue-600 transition-colors py-2"
             >
               ← Process another file
