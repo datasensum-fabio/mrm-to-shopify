@@ -155,7 +155,7 @@ export default function Home() {
                   Latest Shopify product export <span className="font-normal text-gray-400">(optional)</span>
                 </h2>
                 <p className="text-xs text-gray-500 mt-1">
-                  MRM variants whose SKUs are absent from this export are removed before all transformations.
+                  Missing SKUs are removed. Existing variants outside actif/Destockage unpublish their product from the Online Store.
                 </p>
               </div>
               {shopifyFile && (
@@ -245,6 +245,13 @@ export default function Home() {
               </div>
             )}
 
+            {results.stats.shopifyFilterApplied && results.stats.unpublishedProducts > 0 && (
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs">
+                <b>{results.stats.unpublishedProducts.toLocaleString()}</b> product(s) will be unpublished from the Online Store because
+                at least one matched MRM variant is neither actif nor Destockage. This affects <b>{results.stats.unpublishedRows.toLocaleString()}</b> output row(s).
+              </div>
+            )}
+
             {/* Upstream mojibake repair (MRM exports cp1252 text mis-decoded as cp1250) */}
             {results.stats.repaired > 0 && (
               <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs">
@@ -260,7 +267,7 @@ export default function Home() {
                 <h2 className="text-sm font-semibold text-blue-900">Shopify import workflow</h2>
                 <ol className="mt-2 space-y-1 text-xs text-blue-800 list-decimal list-inside">
                   <li><b>Full Import:</b> creates or refreshes products and variants; includes Age Group, Jewel Style, and Stones.</li>
-                  <li><b>Description + Tags + Metafields:</b> updates those product-level fields without changing inventory, pricing, or images.</li>
+                  <li><b>Description + Tags + Metafields:</b> updates those fields and applies any Online Store unpublish instructions without changing inventory, pricing, or images.</li>
                 </ol>
               </div>
 
