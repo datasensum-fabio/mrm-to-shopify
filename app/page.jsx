@@ -267,7 +267,7 @@ export default function Home() {
                 <h2 className="text-sm font-semibold text-blue-900">Shopify import workflow</h2>
                 <ol className="mt-2 space-y-1 text-xs text-blue-800 list-decimal list-inside">
                   <li><b>Full Import:</b> creates or refreshes products and variants; includes Age Group, Jewel Style, and Stones.</li>
-                  <li><b>Description + Tags + Metafields:</b> updates those fields and applies any Online Store unpublish instructions without changing inventory, pricing, or images.</li>
+                  <li><b>Description + Tags + Metafields:</b> when a Shopify export is supplied, includes only products whose values actually changed.</li>
                 </ol>
               </div>
 
@@ -315,12 +315,16 @@ export default function Home() {
                       Select <b>Overwrite existing products</b> during import.
                     </div>
                     <p className="text-xs text-gray-400 mb-3">
-                      {DESC_UPDATE_COLUMNS.length} columns · {results.stats.output.toLocaleString()} rows (all variants included so Shopify can match each size).
-                      Updates Description, Tags, Age Group, Jewel Style, and Stones.
+                      {DESC_UPDATE_COLUMNS.length} columns · {results.stats.descOutput.toLocaleString()} rows across {results.stats.descProducts.toLocaleString()} products.
+                      Updates Description, Tags, publication, Age Group, Jewel Style, and Stones.
                     </p>
-                    {results.descFiles.map(f => (
+                    {results.descFiles.length ? results.descFiles.map(f => (
                       <DownloadButton key={f.filename} {...f} />
-                    ))}
+                    )) : (
+                      <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-sm text-green-800 text-center">
+                        No Description, Tags, publication, or metafield updates are required.
+                      </div>
+                    )}
                   </>
                 )}
               </div>
