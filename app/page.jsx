@@ -57,7 +57,7 @@ export default function Home() {
   const [results,    setResults]    = useState(null);
   const [error,      setError]      = useState(null);
   const [dragging,   setDragging]   = useState(false);
-  const [outputMode, setOutputMode] = useState('full'); // 'full' | 'desc'
+  const [outputMode, setOutputMode] = useState('full'); // 'full' | 'desc' | 'new'
   const [mrmFile,     setMrmFile]     = useState(null);
   const [shopifyFiles, setShopifyFiles] = useState([]);
   const inputRef = useRef(null);
@@ -303,6 +303,7 @@ export default function Home() {
                 <ol className="mt-2 space-y-1 text-xs text-blue-800 list-decimal list-inside">
                   <li><b>Full Import:</b> creates or refreshes products and variants; includes Age Group, Jewel Style, and Stones.</li>
                   <li><b>Description + Tags + Metafields:</b> when a Shopify export is supplied, includes only products whose values actually changed.</li>
+                  <li><b>New Products:</b> full imports for eligible MRM products absent from every supplied Shopify export.</li>
                 </ol>
               </div>
 
@@ -328,6 +329,16 @@ export default function Home() {
                 >
                   Description + Tags + Metafields
                 </button>
+                <button
+                  onClick={() => setOutputMode('new')}
+                  className={`flex-1 px-4 py-3 text-sm font-medium transition-colors
+                    ${outputMode === 'new'
+                      ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-500'
+                      : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
+                    }`}
+                >
+                  New Products
+                </button>
               </div>
 
               {/* Tab content */}
@@ -343,7 +354,7 @@ export default function Home() {
                       <DownloadButton key={f.filename} {...f} />
                     ))}
                   </>
-                ) : (
+                ) : outputMode === 'desc' ? (
                   <>
                     <div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">
                       <b>Existing-product fields only.</b> This does not update inventory, pricing, or images.
@@ -358,6 +369,30 @@ export default function Home() {
                     )) : (
                       <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-sm text-green-800 text-center">
                         No Description, Tags, publication, or metafield updates are required.
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <div className="mb-3 p-3 bg-purple-50 border border-purple-200 rounded-lg text-xs text-purple-800">
+                      <b>New products only.</b> These are full product and variant imports that passed all pipeline rules but were absent from Shopify by both SKU and expected MRM handle.
+                    </div>
+                    {results.stats.shopifyFilterApplied ? (
+                      <>
+                        <p className="text-xs text-gray-400 mb-3">
+                          {results.stats.newProductRows.toLocaleString()} rows across {results.stats.newProducts.toLocaleString()} new products.
+                        </p>
+                        {results.newProductFiles.length ? results.newProductFiles.map(f => (
+                          <DownloadButton key={f.filename} {...f} />
+                        )) : (
+                          <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-sm text-green-800 text-center">
+                            No eligible new products were found.
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800 text-center">
+                        Upload the latest Shopify export file(s) to generate the new-products comparison.
                       </div>
                     )}
                   </>
