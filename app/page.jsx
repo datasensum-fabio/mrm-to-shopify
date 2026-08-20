@@ -59,7 +59,7 @@ export default function Home() {
   const [dragging,   setDragging]   = useState(false);
   const [outputMode, setOutputMode] = useState('full'); // 'full' | 'desc'
   const [mrmFile,     setMrmFile]     = useState(null);
-  const [shopifyFile, setShopifyFile] = useState(null);
+  const [shopifyFiles, setShopifyFiles] = useState([]);
   const inputRef = useRef(null);
   const shopifyInputRef = useRef(null);
 
@@ -86,20 +86,39 @@ export default function Home() {
     setResults(null);
 
     try {
-      const result = await processFile(mrmFile, shopifyFile);
+      const result = await processFile(mrmFile, shopifyFiles);
       setResults(result);
       setStatus('done');
     } catch (err) {
       setError(err.message || 'An unexpected error occurred.');
       setStatus('error');
     }
-  }, [mrmFile, shopifyFile]);
+  }, [mrmFile, shopifyFiles]);
 
   const onDrop      = useCallback((e) => { e.preventDefault(); setDragging(false); selectCSV(e.dataTransfer.files[0], setMrmFile); }, [selectCSV]);
   const onDragOver  = (e) => { e.preventDefault(); setDragging(true);  };
   const onDragLeave = ()  => setDragging(false);
   const onInputChange = (e) => selectCSV(e.target.files[0], setMrmFile);
-  const onShopifyInputChange = (e) => selectCSV(e.target.files[0], setShopifyFile);
+  const onShopifyInputChange = (e) => {
+    const selected = [...e.target.files];
+    const invalid = selected.find(file => !file.name.toLowerCase().endsWith('.csv'));
+    if (invalid) {
+      setError('Every Shopify export file must be a .csv file.');
+      return;
+    }
+    setShopifyFiles(current => {
+      const combined = [...current, ...selected];
+      return combined.filter((file, index) =>
+        combined.findIndex(candidate =>
+          candidate.name === file.name && candidate.size === file.size && candidate.lastModified === file.lastModified
+        ) === index
+      );
+    });
+    setError(null);
+    setResults(null);
+    setStatus('idle');
+    e.target.value = '';
+  };
 
   return (
     <main className="min-h-screen bg-gray-50 py-16 px-4">
@@ -158,17 +177,33 @@ export default function Home() {
                   Missing SKUs are removed. Existing variants outside actif/Destockage unpublish their product from the Online Store.
                 </p>
               </div>
-              {shopifyFile && (
-                <button onClick={() => setShopifyFile(null)} className="text-xs text-red-500 hover:text-red-700">Remove</button>
+              {shopifyFiles.length > 0 && (
+                <button onClick={() => setShopifyFiles([])} className="text-xs text-red-500 hover:text-red-700">Remove all</button>
               )}
             </div>
-            <input ref={shopifyInputRef} type="file" accept=".csv" onChange={onShopifyInputChange} className="hidden" />
+            <input ref={shopifyInputRef} type="file" accept=".csv" multiple onChange={onShopifyInputChange} className="hidden" />
             <button
               onClick={() => shopifyInputRef.current?.click()}
               className="mt-3 w-full px-4 py-3 border border-dashed border-gray-300 rounded-xl text-sm text-gray-600 hover:border-blue-400 hover:bg-blue-50 transition-colors"
             >
-              {shopifyFile ? shopifyFile.name : 'Select Shopify export CSV'}
+              {shopifyFiles.length ? 'Add more Shopify export files' : 'Select Shopify export CSV files'}
             </button>
+            {shopifyFiles.length > 0 && (
+              <div className="mt-3 space-y-1.5">
+                {shopifyFiles.map((file, index) => (
+                  <div key={`${file.name}-${file.size}-${file.lastModified}`} className="flex items-center justify-between gap-3 px-3 py-2 bg-gray-50 rounded-lg">
+                    <span className="text-xs text-gray-600 truncate">{file.name}</span>
+                    <button
+                      onClick={() => setShopifyFiles(files => files.filter((_, fileIndex) => fileIndex !== index))}
+                      className="text-xs text-red-500 hover:text-red-700 whitespace-nowrap"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+                <p className="text-xs text-gray-400">{shopifyFiles.length} Shopify export file(s) selected</p>
+              </div>
+            )}
           </div>
         )}
 
@@ -178,7 +213,7 @@ export default function Home() {
             disabled={!mrmFile}
             className="w-full px-5 py-3.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
           >
-            {shopifyFile ? 'Filter to Shopify products and process' : 'Process MRM file'}
+            {shopifyFiles.length ? 'Filter to Shopify products and process' : 'Process MRM file'}
           </button>
         )}
 
@@ -240,7 +275,7 @@ export default function Home() {
 
             {results.stats.shopifyFilterApplied && (
               <div className="p-3 bg-green-50 border border-green-200 rounded-xl text-green-800 text-xs">
-                Shopify safety filter applied using <b>{results.stats.shopifyVariants.toLocaleString()}</b> exported variant SKUs.
+                Shopify safety filter applied across <b>{results.stats.shopifyFiles.toLocaleString()}</b> file(s), using <b>{results.stats.shopifyVariants.toLocaleString()}</b> exported variant SKUs.
                 Variants absent from that export cannot appear in these output files.
               </div>
             )}
@@ -334,7 +369,7 @@ export default function Home() {
             <button
               onClick={() => {
                 setStatus('idle'); setResults(null); setError(null);
-                setMrmFile(null); setShopifyFile(null);
+                setMrmFile(null); setShopifyFiles([]);
                 if (inputRef.current) inputRef.current.value = '';
                 if (shopifyInputRef.current) shopifyInputRef.current.value = '';
               }}
