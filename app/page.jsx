@@ -283,7 +283,8 @@ export default function Home() {
             {results.stats.shopifyFilterApplied && results.stats.unpublishedProducts > 0 && (
               <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs">
                 <b>{results.stats.unpublishedProducts.toLocaleString()}</b> product(s) will be unpublished from the Online Store because
-                at least one matched MRM variant is neither actif nor Destockage. This affects <b>{results.stats.unpublishedRows.toLocaleString()}</b> output row(s).
+                they are unavailable in MRM or outside the approved product rules. Collection-ineligible existing products are also set to draft.
+                This affects <b>{results.stats.unpublishedRows.toLocaleString()}</b> output row(s).
               </div>
             )}
 
