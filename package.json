@@ -8,6 +8,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "fflate": "^0.8.3",
     "next": "^14.2.35",
     "papaparse": "^5.4.1",
     "react": "^18",

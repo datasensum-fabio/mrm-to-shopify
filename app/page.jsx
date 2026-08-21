@@ -101,9 +101,9 @@ export default function Home() {
   const onInputChange = (e) => selectCSV(e.target.files[0], setMrmFile);
   const onShopifyInputChange = (e) => {
     const selected = [...e.target.files];
-    const invalid = selected.find(file => !file.name.toLowerCase().endsWith('.csv'));
+    const invalid = selected.find(file => !/\.(csv|zip)$/i.test(file.name));
     if (invalid) {
-      setError('Every Shopify export file must be a .csv file.');
+      setError('Every Shopify export file must be a .csv or .zip file.');
       return;
     }
     setShopifyFiles(current => {
@@ -174,19 +174,20 @@ export default function Home() {
                   Latest Shopify product export <span className="font-normal text-gray-400">(optional)</span>
                 </h2>
                 <p className="text-xs text-gray-500 mt-1">
-                  Missing SKUs are removed. Existing variants outside actif/Destockage unpublish their product from the Online Store.
+                  Upload multiple CSV or ZIP files; each ZIP must contain exactly one CSV. Missing SKUs are removed.
+                  Existing variants outside actif/Destockage unpublish their product from the Online Store.
                 </p>
               </div>
               {shopifyFiles.length > 0 && (
                 <button onClick={() => setShopifyFiles([])} className="text-xs text-red-500 hover:text-red-700">Remove all</button>
               )}
             </div>
-            <input ref={shopifyInputRef} type="file" accept=".csv" multiple onChange={onShopifyInputChange} className="hidden" />
+            <input ref={shopifyInputRef} type="file" accept=".csv,.zip" multiple onChange={onShopifyInputChange} className="hidden" />
             <button
               onClick={() => shopifyInputRef.current?.click()}
               className="mt-3 w-full px-4 py-3 border border-dashed border-gray-300 rounded-xl text-sm text-gray-600 hover:border-blue-400 hover:bg-blue-50 transition-colors"
             >
-              {shopifyFiles.length ? 'Add more Shopify export files' : 'Select Shopify export CSV files'}
+              {shopifyFiles.length ? 'Add more Shopify export files' : 'Select Shopify export CSV or ZIP files'}
             </button>
             {shopifyFiles.length > 0 && (
               <div className="mt-3 space-y-1.5">
